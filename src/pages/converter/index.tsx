@@ -41,7 +41,7 @@ export const ConverterPage: React.FC = () => {
         const rtttl = rtx2rtttl.convertToRtttl(binary);
 
         const rtttl2mid = new Rtttl2Mid();
-        const exportedMidi = rtttl2mid.convertToMid(rtttl);
+        const exportedMidi = rtttl2mid.convertRtttlToMidiFile(rtttl);
         return exportedMidi;
     };
 
