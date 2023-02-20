@@ -21,7 +21,7 @@ export class Rtx2Rtttl {
     patternSpecifier!: string;
 
     // https://ozekisms.com/p_2216-mobile-message-type-specification-ringtone-sms.html
-    convertToRtttl(binary: string) {
+    convertToRtttl(binary: string): string {
         let offset = 0;
 
         this.commandLength = binary.slice(offset, offset + 8);
@@ -124,8 +124,6 @@ export class Rtx2Rtttl {
                 i += 4;
             }
         }
-
-        console.log(instructions);
 
         let rtttl = `${title}:d=8,o=4,b=${
             instructions.find((a) => typeof a.tempo !== 'undefined')!.tempo ||

@@ -1,8 +1,21 @@
-import { DeltaTime, hexToBytes, Note2Hex, NoteCodes } from '../config';
+import {
+    EVERY_2_DIGITS_REGEXP,
+    hexToBytes,
+    MICROSECONDS_PER_QUARTER_NOTE_DIVIDEND,
+    MIDI_MIME_TYPE,
+} from '../config';
 
+import { DeltaTime } from './deltatime';
+import { NoteConverter } from './note2hex';
+import { TicksConverter } from './ticks';
+
+const RTTTL_BPM_REGEXP = /b=(\d+)/;
+
+const TICKS_PER_BEAT = 960;
 export class Rtttl2Mid {
     // https://www.mobilefish.com/tutorials/midi/midi_quickguide_specification.html
-    convertToMid(rtttl: string) {
+    convertRtttlToMidiFile(rtttl: string): File {
+        console.log(rtttl);
         const midiHeader = [0x4d, 0x54, 0x68, 0x64];
         const midiHeaderLength = [0x00, 0x00, 0x00, 0x06];
         const singleMultiChannelTrack = [0x00, 0x00];
@@ -23,57 +36,53 @@ export class Rtttl2Mid {
 
         const copyright = [0x00, 0xff, 0x02, 0x00];
 
-        const deltaTimeDescriptor = [0x00, 0xff, 0x58, 0x04];
-        const timeSignature = [0x04, 0x02, 0x18, 0x08];
         const tempoDescriptor = [0x00, 0xff, 0x51, 0x03];
-        const tempo = Math.floor(60000000 / Number(options.split('b=')[1]))
+
+        const bpm = Number(options.match(RTTTL_BPM_REGEXP)![1]);
+        const tempo = Math.floor(
+            (MICROSECONDS_PER_QUARTER_NOTE_DIVIDEND / bpm) * 4,
+        )
             .toString(16)
             .padStart(6, '0')
-            .match(/.{2}/g)!
+            .match(EVERY_2_DIGITS_REGEXP)!
             .map((v) => parseInt(v, 16));
 
-        const instrumentPick = [0x00, 0xc0, 0x4f];
+        const instrumentPick = [0x00, 0xc0, 0x50];
         const lengthDependentMetadata = [
             ...metadata,
             ...trackName,
             ...copyright,
-            ...deltaTimeDescriptor,
-            ...timeSignature,
             ...tempoDescriptor,
-            ...tempo,
+            ...[...new Array(3 - tempo.length).fill(0x00), ...tempo],
             ...instrumentPick,
         ];
 
-        const note2hex = new Note2Hex();
+        const note2hex = new NoteConverter();
         const deltaTime = new DeltaTime();
+        const ticksConverter = new TicksConverter();
 
         for (const note of notes.split(',')) {
-            const { noteCode, duration } = note2hex.convertToHex(note);
+            const { noteCode, duration, velocity, shouldUseDotNotation } =
+                note2hex.convertToComponents(note);
 
-            let deltaTimeRelativeDuration;
+            const ticks = ticksConverter.convertDurationToTicks(
+                bpm,
+                TICKS_PER_BEAT,
+                duration,
+                shouldUseDotNotation,
+            );
 
-            if (duration * 10 >= 320) {
-                deltaTimeRelativeDuration = [0x82, 0x2c];
-            } else {
-                deltaTimeRelativeDuration = deltaTime.convertNumberToDeltaTime(
-                    duration * 10,
-                );
-            }
+            const deltaTimeDuration = deltaTime.convertNumberToDeltaTime(ticks);
 
-            if (noteCode === NoteCodes.PAUSE) {
-                lengthDependentMetadata.push(
-                    ...[...deltaTimeRelativeDuration, 0x90, 25, 0x00],
-                    ...[...deltaTimeRelativeDuration, 0x80, 30, 0x00],
-                );
-            } else {
-                lengthDependentMetadata.push(
-                    ...[0x00, 0x90, noteCode, 0x7f],
-                    ...[...deltaTimeRelativeDuration, 0x80, noteCode, 0x00],
-                );
-            }
+            lengthDependentMetadata.push(
+                ...[0x00],
+                ...[0x90, noteCode, velocity],
+                ...deltaTimeDuration,
+                ...[0x80, noteCode, 0x00],
+            );
         }
 
-        lengthDependentMetadata.push(...[0x00, 0xff, 0x2f, 0x00]);
+        lengthDependentMetadata.push(0x00, 0xff, 0x2f, 0x00);
 
         const contentBytes = hexToBytes(
             lengthDependentMetadata.length.toString(16).padStart(4, '0'),
@@ -95,8 +104,12 @@ export class Rtttl2Mid {
                     ...lengthDependentMetadata,
                 ]),
             ],
-            `export_${Date.now().toString()}.mid`,
-            { type: 'audio/midi' },
+            this.generateFilename(),
+            MIDI_MIME_TYPE,
         );
+    }
+
+    private generateFilename(): string {
+        return `rtx2midi_${Date.now().toString()}.mid`;
     }
 }

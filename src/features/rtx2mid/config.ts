@@ -15,16 +15,6 @@ export class NoteCodes {
     static PAUSE = -1;
 }
 
-export class DeltaTime {
-    convertNumberToDeltaTime(inputNumber: number) {
-        if (inputNumber <= 127) {
-            return [inputNumber];
-        } else {
-            return [127];
-        }
-    }
-}
-
 export const NOTE_TO_NUMBER: Indexable<number> = {
     c: 0,
     'c#': 1,
@@ -40,23 +30,6 @@ export const NOTE_TO_NUMBER: Indexable<number> = {
     h: 11,
     p: 0,
 };
-
-export class Note2Hex {
-    convertToHex(note: string) {
-        const [duration, pitch, octave = 4] = note
-            .match(/(\d+)([a-z#]+)(\d+)?/)!
-            .slice(1);
-
-        if (note.includes('p')) {
-            return { noteCode: -1, duration: Number(duration) };
-        }
-
-        return {
-            noteCode: NOTE_TO_NUMBER[pitch] + Number(octave) * 12,
-            duration: Number(duration),
-        };
-    }
-}
 
 export const BEATS_PER_MINUTE_ENCODING: Indexable<number> = {
     '00000': 25,
@@ -141,3 +114,9 @@ export const hexToBytes = (hex: string) => {
 
     return bytes;
 };
+
+export const EVERY_2_DIGITS_REGEXP = /.{2}/g;
+
+export const MICROSECONDS_PER_QUARTER_NOTE_DIVIDEND = 60_000_000;
+
+export const MIDI_MIME_TYPE = { type: 'audio/midi' };
