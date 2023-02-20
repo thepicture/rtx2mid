@@ -15,6 +15,7 @@ const TICKS_PER_BEAT = 960;
 export class Rtttl2Mid {
     // https://www.mobilefish.com/tutorials/midi/midi_quickguide_specification.html
     convertRtttlToMidiFile(rtttl: string): File {
+        console.log(rtttl);
         const midiHeader = [0x4d, 0x54, 0x68, 0x64];
         const midiHeaderLength = [0x00, 0x00, 0x00, 0x06];
         const singleMultiChannelTrack = [0x00, 0x00];
@@ -35,28 +36,24 @@ export class Rtttl2Mid {
 
         const copyright = [0x00, 0xff, 0x02, 0x00];
 
-        const deltaTimeDescriptor = [0x00, 0xff, 0x58, 0x04];
-        const timeSignature = [0x04, 0x02, 0x18, 0x08];
         const tempoDescriptor = [0x00, 0xff, 0x51, 0x03];
 
         const bpm = Number(options.match(RTTTL_BPM_REGEXP)![1]);
         const tempo = Math.floor(
-            (MICROSECONDS_PER_QUARTER_NOTE_DIVIDEND / bpm) * 3,
+            (MICROSECONDS_PER_QUARTER_NOTE_DIVIDEND / bpm) * 4,
         )
             .toString(16)
             .padStart(6, '0')
             .match(EVERY_2_DIGITS_REGEXP)!
             .map((v) => parseInt(v, 16));
 
-        const instrumentPick = [0x00, 0xc0, 0x4f];
+        const instrumentPick = [0x00, 0xc0, 0x50];
         const lengthDependentMetadata = [
             ...metadata,
             ...trackName,
             ...copyright,
-            ...deltaTimeDescriptor,
-            ...timeSignature,
             ...tempoDescriptor,
-            ...tempo,
+            ...[...new Array(3 - tempo.length).fill(0x00), ...tempo],
             ...instrumentPick,
         ];
 
@@ -65,13 +62,14 @@ export class Rtttl2Mid {
         const ticksConverter = new TicksConverter();
 
         for (const note of notes.split(',')) {
-            const { noteCode, duration, velocity } =
+            const { noteCode, duration, velocity, shouldUseDotNotation } =
                 note2hex.convertToComponents(note);
 
             const ticks = ticksConverter.convertDurationToTicks(
                 bpm,
                 TICKS_PER_BEAT,
                 duration,
+                shouldUseDotNotation,
             );
 
             const deltaTimeDuration = deltaTime.convertNumberToDeltaTime(ticks);

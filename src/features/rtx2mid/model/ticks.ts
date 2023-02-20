@@ -5,10 +5,17 @@ export class TicksConverter {
         bpm: number,
         ticksPerBeat: number,
         fractionDuration: number,
+        shouldUseDotNotation: boolean = false,
     ): number {
-        return Math.round(
+        const ticks = Math.round(
             (MICROSECONDS_PER_QUARTER_NOTE_DIVIDEND / bpm / ticksPerBeat) *
                 (1 / fractionDuration),
         );
+
+        if (shouldUseDotNotation) {
+            return ticks + ticks / 2;
+        } else {
+            return ticks;
+        }
     }
 }
