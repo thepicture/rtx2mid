@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/rtx2mid/static/css/main.409060d6.css",
+    "main.js": "/rtx2mid/static/js/main.b3e48000.js",
+    "index.html": "/rtx2mid/index.html",
+    "main.409060d6.css.map": "/rtx2mid/static/css/main.409060d6.css.map",
+    "main.b3e48000.js.map": "/rtx2mid/static/js/main.b3e48000.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.409060d6.css",
+    "static/js/main.b3e48000.js"
+  ]
+}
