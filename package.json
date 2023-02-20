@@ -1,7 +1,7 @@
 {
   "name": "rtx2mid",
   "homepage": "https://thepicture.github.io/rtx2mid",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^5.0.1",
