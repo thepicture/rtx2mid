@@ -1,14 +1,15 @@
 import { CommonLayout } from 'shared/ui/layout';
-import { ConverterPage } from 'pages/converter';
+import { withProviders } from './providers';
 
 import 'app/index.css';
+import { Routing } from 'pages';
 
 function App() {
     return (
         <CommonLayout>
-            <ConverterPage />
+            <Routing />
         </CommonLayout>
     );
 }
 
-export default App;
+export default withProviders(App);
