@@ -6,7 +6,6 @@ import { Form, Popover, Upload } from 'antd';
 import { CommonCard } from 'shared/ui/card';
 
 import { Rtx2Rtttl } from 'features/rtx2mid/model/rtx2rtttl';
-import { Rtttl2Mid } from 'features/rtx2mid/model/rtttl2mid';
 import { useState } from 'react';
 
 const formItemLayout = {
@@ -14,7 +13,7 @@ const formItemLayout = {
     wrapperCol: { span: 14 },
 };
 
-export const ConverterPage: React.FC = () => {
+const Rtx2RtttlConverterPage: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [results, setResults] = useState('');
 
@@ -30,7 +29,7 @@ export const ConverterPage: React.FC = () => {
         requestAnimationFrame(() => URL.revokeObjectURL(reference));
     };
 
-    const getExportedMidi = async (file: File) => {
+    const getExportedRtttl = async (file: File) => {
         const buffer = new Uint8Array(await file.arrayBuffer());
 
         const binary = Array.from(buffer)
@@ -40,18 +39,16 @@ export const ConverterPage: React.FC = () => {
         const rtx2rtttl = new Rtx2Rtttl();
         const rtttl = rtx2rtttl.convertToRtttl(binary);
 
-        const rtttl2mid = new Rtttl2Mid();
-        const exportedMidi = rtttl2mid.convertRtttlToMidiFile(rtttl);
-        return exportedMidi;
+        return rtx2rtttl.digestToFile(rtttl);
     };
 
     const handleConvert = async (file: File) => {
         setIsOpen(false);
 
         try {
-            const exportedMidi = await getExportedMidi(file);
+            const exportedRtttl = await getExportedRtttl(file);
 
-            downloadConvertedFile(exportedMidi);
+            downloadConvertedFile(exportedRtttl);
 
             setResults('Conversion successful!');
         } catch {
@@ -98,3 +95,5 @@ export const ConverterPage: React.FC = () => {
         </CommonCard>
     );
 };
+
+export default Rtx2RtttlConverterPage;

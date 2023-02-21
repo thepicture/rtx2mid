@@ -5,6 +5,7 @@ import {
     BINARY_TO_NOTE_DURATION_SPECIFIER,
     BINARY_TO_SCALE,
     BEATS_PER_MINUTE_ENCODING,
+    MIDI_MIME_TYPE,
 } from '../config';
 
 const DEFAULT_BPM = 63;
@@ -151,5 +152,17 @@ export class Rtx2Rtttl {
         }
 
         return rtttl + notes.join(',');
+    }
+
+    digestToFile(rtttl: string) {
+        return new File(
+            [new Uint8Array(rtttl.split('').map((word) => word.charCodeAt(0)))],
+            this.generateFilename(),
+            MIDI_MIME_TYPE,
+        );
+    }
+
+    private generateFilename(): string {
+        return `rtx2rtttl_${Date.now().toString()}.rtttl`;
     }
 }
